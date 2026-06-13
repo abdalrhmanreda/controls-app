@@ -1,0 +1,70 @@
+name: control_app
+description: "A new Flutter project."
+publish_to: 'none' 
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  
+  # Core
+  bloc: ^8.1.4
+  intl: ^0.20.2
+  
+  # Localization
+  easy_localization: ^3.0.7
+  
+  # Responsive
+  flutter_screenutil: ^5.9.3
+  
+  # Networking
+  dio: ^5.7.0
+  retrofit: ^4.4.1
+  pretty_dio_logger: ^1.4.0
+  
+  # State Management
+  flutter_bloc: ^8.1.6
+  provider: ^6.1.2
+  
+  # Dependency Injection
+  get_it: ^9.2.0
+  
+  # Icons & Images
+  icons_plus: ^5.0.0
+  flutter_svg: ^2.0.10+1
+  iconsax_flutter: ^1.0.0
+  
+  # Navigation
+  persistent_bottom_nav_bar: ^6.2.1
+  
+  # Storage
+  shared_preferences: ^2.3.3
+  flutter_secure_storage: ^9.2.4
+  
+  # Smooth Page Indicator
+  smooth_page_indicator: ^2.0.1
+  # Google Fonts
+  google_fonts: ^6.3.3
+
+  # Local Database
+  sqflite: ^2.4.2
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: "^0.13.1"
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.13
+  retrofit_generator: ^10.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/lang/
+    - assets/images/
