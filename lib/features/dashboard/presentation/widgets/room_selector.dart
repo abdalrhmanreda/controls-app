@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'bounce_tap.dart';
 
 const _kDark = Color(0xFF1A1E17);
 const _kGreenDot = Color(0xFF8FBF5A);
@@ -32,7 +33,7 @@ class RoomSelector extends StatelessWidget {
 
           return Padding(
             padding: EdgeInsets.only(right: 10.w),
-            child: GestureDetector(
+            child: BounceTap(
               onTap: () => onRoomSelected(room),
               child: Stack(
                 clipBehavior: Clip.none,

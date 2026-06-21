@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'bounce_tap.dart';
 
 const _kDark = Color(0xFF1A1E17);
 const _kSurface = Color(0xFFF2F3ED);
@@ -145,56 +146,25 @@ class _ChannelSelectorState extends State<ChannelSelector>
   }
 }
 
-class _ChannelButton extends StatefulWidget {
+class _ChannelButton extends StatelessWidget {
   const _ChannelButton({required this.icon, required this.onTap});
 
   final IconData icon;
   final VoidCallback onTap;
 
   @override
-  State<_ChannelButton> createState() => _ChannelButtonState();
-}
-
-class _ChannelButtonState extends State<_ChannelButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 150));
-    _scale = Tween<double>(begin: 1.0, end: 0.85)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _ctrl.forward(),
-      onTapUp: (_) async {
-        await _ctrl.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () => _ctrl.reverse(),
-      child: ScaleTransition(
-        scale: _scale,
-        child: Container(
-          width: 42.w,
-          height: 42.w,
-          decoration: BoxDecoration(
-            color: _kSurface,
-            borderRadius: BorderRadius.circular(14.r),
-          ),
-          child: Icon(widget.icon, color: _kDark, size: 18.sp),
+    return BounceTap(
+      onTap: onTap,
+      beginScale: 0.85,
+      child: Container(
+        width: 42.w,
+        height: 42.w,
+        decoration: BoxDecoration(
+          color: _kSurface,
+          borderRadius: BorderRadius.circular(14.r),
         ),
+        child: Icon(icon, color: _kDark, size: 18.sp),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'bounce_tap.dart';
 
 /// A beautiful standalone toggle switch with:
 /// - Elastic knob animation
@@ -82,8 +83,9 @@ class _SmartToggleSwitchState extends State<SmartToggleSwitch>
           SizedBox(width: 10.w),
         ],
 
-        GestureDetector(
+        BounceTap(
           onTap: _handleTap,
+          beginScale: 0.95,
           child: AnimatedBuilder(
             animation: _pulseCtrl,
             builder: (context, _) {

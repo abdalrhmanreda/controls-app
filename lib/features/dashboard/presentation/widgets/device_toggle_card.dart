@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'pressable_scale.dart';
 
 // ─── Shared Design Tokens (package-private) ───────────────────────
 const kCardDark = Color(0xFF1A1E17);
@@ -88,7 +89,7 @@ class _DeviceToggleCardState extends State<DeviceToggleCard>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PressableScale(
       onTap: widget.onTap,
       child: AnimatedBuilder(
         animation: _ctrl,

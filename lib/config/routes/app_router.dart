@@ -36,7 +36,7 @@ class AppRouter {
         );
       case RouteNames.smartTvControl:
         final args = settings.arguments as Map<String, dynamic>?;
-        final name = args?['name'] as String? ?? 'User';
+        final name = args?['name'] as String? ?? 'Abdalrhman reda';
         final profilePictureUrl = args?['profilePictureUrl'] as String?;
         final email = args?['email'] as String? ?? '';
         return MaterialPageRoute(

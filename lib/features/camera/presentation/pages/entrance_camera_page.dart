@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:video_player/video_player.dart';
+import '../../../dashboard/presentation/widgets/bounce_tap.dart';
 
 class EntranceCameraPage extends StatefulWidget {
   const EntranceCameraPage({super.key});
@@ -11,7 +14,12 @@ class EntranceCameraPage extends StatefulWidget {
   State<EntranceCameraPage> createState() => _EntranceCameraPageState();
 }
 
-class _EntranceCameraPageState extends State<EntranceCameraPage> {
+class _EntranceCameraPageState extends State<EntranceCameraPage>
+    with SingleTickerProviderStateMixin {
+  late VideoPlayerController _videoController;
+  late AnimationController _sweepCtrl;
+  bool _isInitialized = false;
+
   bool _isRecording = true;
   bool _isMuted = true;
   double _panX = 0.0;
@@ -26,9 +34,32 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
   @override
   void initState() {
     super.initState();
+    
+    // Looping scanner line animation
+    _sweepCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+
+    // Initialize Video Player
+    _videoController = VideoPlayerController.asset('assets/room.mp4')
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() {
+            _isInitialized = true;
+          });
+          _videoController.setLooping(true);
+          _videoController.setVolume(_isMuted ? 0.0 : 1.0);
+          _videoController.play();
+        }
+      });
+
+    // REC blinking dot timer
     _blinkTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
       if (mounted) setState(() => _blinkState = !_blinkState);
     });
+
+    // Timestamp timer
     _updateTimestamp();
     _timeTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) _updateTimestamp();
@@ -46,6 +77,8 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
 
   @override
   void dispose() {
+    _sweepCtrl.dispose();
+    _videoController.dispose();
     _blinkTimer?.cancel();
     _timeTimer?.cancel();
     super.dispose();
@@ -69,26 +102,61 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
     _toast('Camera Centered');
   }
 
+  void _toggleRecording() {
+    setState(() {
+      _isRecording = !_isRecording;
+      if (_isRecording) {
+        _videoController.play();
+        _toast('Recording Started');
+      } else {
+        _videoController.pause();
+        _toast('Recording Paused');
+      }
+    });
+    HapticFeedback.lightImpact();
+  }
+
+  void _toggleMute() {
+    setState(() {
+      _isMuted = !_isMuted;
+      _videoController.setVolume(_isMuted ? 0.0 : 1.0);
+      _toast(_isMuted ? 'Audio Muted' : 'Audio Stream Active');
+    });
+    HapticFeedback.lightImpact();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Camera feed with pan/tilt
+          // Fullscreen Video Player Feed with pan/tilt matrices
           Positioned.fill(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOutCubic,
-              transform: Matrix4.translationValues(_panX, _panY, 0.0),
-              child: Image.asset(
-                'assets/images/entrance_camera_feed.png',
-                fit: BoxFit.cover,
-              ),
-            ),
+            child: _isInitialized
+                ? AnimatedContainer(
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeOutCubic,
+                    transform: Matrix4.translationValues(_panX, _panY, 0.0),
+                    child: SizedBox.expand(
+                      child: FittedBox(
+                        fit: BoxFit.cover,
+                        child: SizedBox(
+                          width: _videoController.value.size.width,
+                          height: _videoController.value.size.height,
+                          child: VideoPlayer(_videoController),
+                        ),
+                      ),
+                    ),
+                  )
+                : const Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                    ),
+                  ),
           ),
 
-          // Dark gradient overlays
+          // Ambient dark gradients for UI readability
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -97,11 +165,11 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
                     Colors.black.withValues(alpha: 0.55),
                     Colors.transparent,
                     Colors.transparent,
-                    Colors.black.withValues(alpha: 0.6),
+                    Colors.black.withValues(alpha: 0.65),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  stops: const [0.0, 0.2, 0.75, 1.0],
+                  stops: const [0.0, 0.25, 0.65, 1.0],
                 ),
               ),
             ),
@@ -112,7 +180,20 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
             child: CustomPaint(painter: CameraGridPainter()),
           ),
 
-          // REC indicator + timestamp
+          // Sweeping Laser Scanner Line effect
+          if (_isRecording && _isInitialized)
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _sweepCtrl,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: _ScanlinePainter(_sweepCtrl.value),
+                  );
+                },
+              ),
+            ),
+
+          // REC indicator + live running timestamp
           Positioned(
             top: 100.h,
             left: 24.w,
@@ -156,7 +237,7 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
             ),
           ),
 
-          // Top bar: Back, Title, Bell
+          // Top bar: Back button, Title, Bell
           Positioned(
             top: 50.h,
             left: 20.w,
@@ -165,7 +246,7 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Back Button
-                GestureDetector(
+                BounceTap(
                   onTap: () => Navigator.pop(context),
                   child: Container(
                     width: 44.w,
@@ -226,20 +307,15 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
             ),
           ),
 
-          // Right sidebar: Record toggle, Mute toggle
+          // Right sidebar: Record and Mute toggles
           Positioned(
             top: 160.h,
             right: 20.w,
             child: Column(
               children: [
                 // Record toggle
-                GestureDetector(
-                  onTap: () {
-                    setState(() => _isRecording = !_isRecording);
-                    _toast(_isRecording
-                        ? 'Recording Started'
-                        : 'Recording Paused');
-                  },
+                BounceTap(
+                  onTap: _toggleRecording,
                   child: Container(
                     width: 44.w,
                     height: 44.w,
@@ -264,28 +340,20 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
                 SizedBox(height: 16.h),
 
                 // Mute toggle
-                GestureDetector(
-                  onTap: () {
-                    setState(() => _isMuted = !_isMuted);
-                    _toast(
-                        _isMuted ? 'Audio Muted' : 'Audio Stream Active');
-                  },
+                BounceTap(
+                  onTap: _toggleMute,
                   child: Container(
                     width: 44.w,
                     height: 44.w,
                     decoration: BoxDecoration(
-                      color: _isMuted
-                          ? Colors.white
-                          : const Color(0xFF1A1E17),
+                      color: _isMuted ? Colors.white : const Color(0xFF1A1E17),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       _isMuted
                           ? Iconsax.volume_mute_copy
                           : Iconsax.volume_high_copy,
-                      color: _isMuted
-                          ? const Color(0xFF1A1E17)
-                          : Colors.white,
+                      color: _isMuted ? const Color(0xFF1A1E17) : Colors.white,
                       size: 20.sp,
                     ),
                   ),
@@ -294,7 +362,7 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
             ),
           ),
 
-          // Bottom Navigation Controller
+          // Bottom Navigation Controller (circle pan buttons & center joystick)
           Positioned(
             bottom: 44.h,
             left: 24.w,
@@ -321,7 +389,7 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
 
   Widget _circlePanBtn(
       {required IconData icon, required VoidCallback onTap}) {
-    return GestureDetector(
+    return BounceTap(
       onTap: onTap,
       child: Container(
         width: 48.w,
@@ -376,7 +444,7 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
             ),
           ),
         // Center knob
-        GestureDetector(
+        BounceTap(
           onTap: _resetCamera,
           child: Container(
             width: 30.w,
@@ -403,7 +471,9 @@ class _EntranceCameraPageState extends State<EntranceCameraPage> {
         content: Text(
           message,
           style: GoogleFonts.urbanist(
-              color: Colors.white, fontWeight: FontWeight.bold),
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
           textAlign: TextAlign.center,
         ),
         duration: const Duration(milliseconds: 700),
@@ -474,3 +544,39 @@ class CameraGridPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+class _ScanlinePainter extends CustomPainter {
+  final double sweepProgress;
+  _ScanlinePainter(this.sweepProgress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..color = const Color(0xFFA8C37A).withValues(alpha: 0.15)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    final glowPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          const Color(0xFFA8C37A).withValues(alpha: 0.0),
+          const Color(0xFFA8C37A).withValues(alpha: 0.08),
+          const Color(0xFFA8C37A).withValues(alpha: 0.0),
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(0, (sweepProgress * size.height) - 15.h, size.width, 30.h))
+      ..style = PaintingStyle.fill;
+
+    final y = sweepProgress * size.height;
+    
+    // Draw the glow band
+    canvas.drawRect(Rect.fromLTWH(0, y - 15.h, size.width, 30.h), glowPaint);
+    // Draw the line
+    canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+  }
+
+  @override
+  bool shouldRepaint(_ScanlinePainter old) => old.sweepProgress != sweepProgress;
+}
+

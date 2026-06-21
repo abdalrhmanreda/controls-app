@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'bounce_tap.dart';
 
 const _kGreen = Color(0xFFA8C37A);
 
@@ -142,7 +143,7 @@ class _TvScreenCardState extends State<TvScreenCard>
                         ),
                       ),
                       SizedBox(height: 14.h),
-                      GestureDetector(
+                      BounceTap(
                         onTap: widget.onTogglePower,
                         child: Container(
                           padding: EdgeInsets.symmetric(
@@ -214,7 +215,7 @@ class _TvScreenCardState extends State<TvScreenCard>
 
                 // Center play/pause
                 Center(
-                  child: GestureDetector(
+                  child: BounceTap(
                     onTap: widget.onTogglePlay,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 250),

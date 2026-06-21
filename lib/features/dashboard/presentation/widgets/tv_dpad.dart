@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class TvDpad extends StatefulWidget {
@@ -30,6 +31,7 @@ class _TvDpadState extends State<TvDpad> with SingleTickerProviderStateMixin {
   }
 
   void _handleTap(String direction) {
+    HapticFeedback.lightImpact();
     setState(() => _pressedDirection = direction);
     _rippleCtrl.forward().then((_) {
       _rippleCtrl.reverse().then((_) {
